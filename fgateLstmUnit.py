@@ -49,7 +49,6 @@ class fgateLstmUnit(Module):
         out, state = h, (h, c)
         if finished is not None:
             finished = jt.view(finished, (-1, 1))
-            finished = jt.float32(finished)
             out = (1 - finished) * h
             state = ((1 - finished) * h + finished * h_prev, (1 - finished) * c + finished * c_prev)
             # out = tf.multiply(1 - finished, h)

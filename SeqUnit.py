@@ -132,14 +132,17 @@ class SeqUnit(Module):
         # parameters of embedding matrices
         self.word_embedding = nn.Embedding(self._source_vocab, self._emb_size)
         # print("word embedding weight", self.word_embedding.weight)
-        # self.word_embedding.weight = jt.ones((self._source_vocab, self._emb_size))
+        self.word_embedding.weight = jt.init.xavier_uniform((self._source_vocab, self._emb_size))
         self.word_embedding.weight.requires_grad = True
         if self._field_concat or self._fgate_enc or self._encoder_add_pos or self._decoder_add_pos:
             self.field_embedding = nn.Embedding(self._field_vocab, self._field_size)
+            self.field_embedding.weight = jt.init.xavier_uniform((self._field_vocab, self._field_size))
             self.field_embedding.weight.requires_grad = True
         if self._position_concat or self._encoder_add_pos or self._decoder_add_pos:
             self.position_embedding = nn.Embedding(self._position_vocab, self._pos_size)
             self.right_position_embedding = nn.Embedding(self._position_vocab, self._pos_size)
+            self.position_embedding.weight = jt.init.xavier_uniform((self._position_vocab, self._pos_size))
+            self.right_position_embedding.weight = jt.init.xavier_uniform((self._position_vocab, self._pos_size))
             self.position_embedding.weight.requires_grad = True
             self.right_position_embedding.weight.requires_grad = True
         # if self.field_concat or self.fgate_enc:

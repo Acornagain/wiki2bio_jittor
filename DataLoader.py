@@ -5,7 +5,7 @@
 
 import time
 import numpy as np
-
+import random
 
 class DataLoader(object):
     def __init__(self, data_dir, limits):
@@ -50,7 +50,7 @@ class DataLoader(object):
         rposes = [list(map(int, rpos.strip().split(' '))) for rpos in rposes]
         return summaries, texts, fields, poses, rposes
 
-    def batch_iter(self, data, batch_size, shuffle):
+    def batch_iter(self, data, batch_size, shuffle, disorder_fields=False):
         summaries, texts, fields, poses, rposes = data
         data_size = len(summaries)
         num_batches = int(data_size / batch_size) if data_size % batch_size == 0 \
@@ -63,6 +63,7 @@ class DataLoader(object):
             fields = np.array(fields, dtype=object)[shuffle_indices]
             poses = np.array(poses, dtype=object)[shuffle_indices]
             rposes = np.array(rposes, dtype=object)[shuffle_indices]
+
 
         for batch_num in range(num_batches):
             start_index = batch_num * batch_size
@@ -84,6 +85,45 @@ class DataLoader(object):
                 assert text_len == len(field)
                 assert pos_len == len(field)
                 assert rpos_len == pos_len
+
+                if disorder_fields:
+                    last = None
+                    start = 0
+                    starts = []
+                    lens = []
+                    for i, f in enumerate(field):
+                        if last == None or f == last:
+                            last = f    
+                            continue
+                        else:
+                            starts.append(start)
+                            lens.append(i - start)
+                            start = i
+                            last = f
+                    starts.append(start)
+                    lens.append(len(field) - start)
+                    randnum = random.randint(0,10000)
+                    random.seed(randnum)
+                    random.shuffle(starts)
+                    random.seed(randnum)
+                    random.shuffle(lens)
+                    s_indices = []
+                    for i in range(len(starts)):
+                        for j in range(lens[i]):
+                            s_indices.append(starts[i] + j)
+                    assert len(s_indices) == text_len
+                    text = np.array(text)[s_indices].tolist()
+                    field = np.array(field)[s_indices].tolist()
+                    pos = np.array(pos)[s_indices].tolist()
+                    rpos = np.array(rpos)[s_indices].tolist()
+                    text_len = len(text)
+                    pos_len = len(pos)
+                    rpos_len = len(rpos)
+                    assert text_len == len(field)
+                    assert pos_len == len(field)
+                    assert rpos_len == pos_len
+                    
+                
                 gold = summary + [2] + [0] * (max_summary_len - summary_len)
                 summary = summary + [0] * (max_summary_len - summary_len)
                 text = text + [0] * (max_text_len - text_len)
@@ -106,5 +146,6 @@ class DataLoader(object):
                 batch_data['dec_in'].append(summary)
                 batch_data['dec_len'].append(summary_len)
                 batch_data['dec_out'].append(gold)
+                # print(len(text), text_len, len(field), len(pos), len(rpos), len(summary), summary_len, len(gold))
   
             yield batch_data

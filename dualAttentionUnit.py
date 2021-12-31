@@ -73,20 +73,20 @@ class dualAttentionWrapper(Module):
 
         fd_weights = jt.sum(phi_fds * alpha_h, dim=2, keepdims=True)
         fd_weights = jt.exp(fd_weights - jt.max(fd_weights, dim=0, keepdims=True))
-        fd_weights = jt.divide(fd_weights, (1e-6 + jt.sum(fd_weights, dim=0, keepdims=True)))
-        # if beta is not None:
-        #     beta.append(fd_weights.tolist())
+        fd_weights = jt.divide(fd_weights, (1e-18 + jt.sum(fd_weights, dim=0, keepdims=True)))
+        if beta is not None:
+            beta.append(fd_weights.detach().tolist())
         # print("fd_weights\n" ,fd_weights)
 
         weights = jt.sum(phi_hs * gamma_h, dim=2, keepdims=True)  # input_len * batch
         weights = jt.exp(weights - jt.max(weights, dim=0, keepdims=True))
-        weights = jt.divide(weights, (1e-6 + jt.sum(weights, dim=0, keepdims=True)))
-        # if alpha is not None:
-        #     alpha.append(weights.tolist())
+        weights = jt.divide(weights, (1e-18 + jt.sum(weights, dim=0, keepdims=True)))
+        if alpha is not None:
+            alpha.append(weights.detach().tolist())
         # print("weights\n", weights)
-        weights = jt.divide(weights * fd_weights, (1e-6 + jt.sum(weights * fd_weights, dim=0, keepdims=True)))
-        # if gamma is not None:
-        #     gamma.append(weights.tolist())
+        weights = jt.divide(weights * fd_weights, (1e-18 + jt.sum(weights * fd_weights, dim=0, keepdims=True)))
+        if gamma is not None:
+            gamma.append(weights.detach().tolist())
         context = jt.sum(hs * weights, dim=0)  # batch * hidden_size
 
         out = jt.tanh(jt.matmul(jt.concat([context, x], -1), self.Wo) + self.bo)
